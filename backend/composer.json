@@ -1,5 +1,5 @@
 {
-    "name": "fct/sistema-biblioteca-backend",
+    "name": "proyecto_fct/sistema-biblioteca-backend",
     "description": "Backend API para Sistema de Biblioteca",
     "type": "project",
     "require": {

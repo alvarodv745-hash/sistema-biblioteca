@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS libros (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(255) NOT NULL,
     autor VARCHAR(150) NOT NULL,
-    anio YEAR NOT NULL,
+    anio SMALLINT NOT NULL,
     isbn VARCHAR(20) DEFAULT NULL UNIQUE,
     descripcion TEXT DEFAULT NULL,
     cantidad_total INT UNSIGNED NOT NULL DEFAULT 1,
@@ -118,7 +118,7 @@ BEGIN
   END IF;
 END$$
 
-DELIMITER;
+DELIMITER ;
 
 -- ============================================================
 -- DATOS INICIALES (seed)
