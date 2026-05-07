@@ -46,7 +46,7 @@ DB_NAME=biblioteca
 php -S localhost:8000
 ```
 
-La API estará disponible en: **http://localhost:8000/api**
+La API estará disponible en: **http://localhost:8000/api** 
 
 ---
 
@@ -86,7 +86,7 @@ backend/
 
 ## 🧪 Testing
 
-Usa **Postman** o **curl** para probar los endpoints:
+Usa **Postman/Thunder Client** o **curl** para probar los endpoints:
 
 ```bash
 curl -X GET http://localhost:8000/api/libros
@@ -101,7 +101,6 @@ DB_HOST=localhost
 DB_USER=root
 DB_PASS=
 DB_NAME=biblioteca
-API_KEY=tu_clave_secreta_aqui
 ```
 
 ---

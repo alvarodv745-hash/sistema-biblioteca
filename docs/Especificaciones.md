@@ -138,14 +138,3 @@ Sistema de gestión de biblioteca con dos componentes:
 
 ## 9. Roadmap
 
-**Fase 1 (Actual)**
-- ✅ Estructura base
-- ⏳ BD + Backend
-- ⏳ Cliente Python
-- ⏳ Integración básica
-
-**Fase 2 (Extra)**
-- 📱 Generación de QR
-- 📷 Lectura de QR (webcam)
-- 🔔 Alertas de retrasos
-- 📊 Reportes simples

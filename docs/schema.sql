@@ -124,7 +124,7 @@ DELIMITER ;
 -- DATOS INICIALES (seed)
 -- ============================================================
 
--- Bibliotecario por defecto  (password: admin1234)
+-- Bibliotecario por defecto  (password: password)
 INSERT INTO
     usuarios (nombre, email, password, tipo)
 VALUES (
@@ -134,13 +134,13 @@ VALUES (
         'Bibliotecario'
     );
 
--- Lector de ejemplo  (password: lector1234)
+-- Lector de ejemplo  (password: password)
 INSERT INTO
     usuarios (nombre, email, password, tipo)
 VALUES (
         'María López',
         'maria@biblioteca.com',
-        '$2y$10$TKh8H1.PFbuSpgvguEe/CuJrcYs8yR25q1fgCxmjSCDJ2w.cBNVQe',
+        '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
         'Lector'
     );
 
