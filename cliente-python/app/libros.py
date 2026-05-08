@@ -181,7 +181,7 @@ class LibrosPanel(tk.Frame):
 
         dlg = tk.Toplevel(self.winfo_toplevel())
         dlg.title(titulo_dlg)
-        dlg.geometry("420x440")
+        dlg.geometry("420x560")
         dlg.resizable(False, False)
         dlg.configure(bg=self.PANEL_BG)
         dlg.grab_set()

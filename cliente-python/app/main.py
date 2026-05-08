@@ -1,6 +1,6 @@
 """
 Ventana principal del Sistema de Gestión de Biblioteca.
-Contiene la barra lateral de navegación y carga los paneles.
+Versión 1.1.0 - incluye panel QR en la navegación.
 """
 
 import tkinter as tk
@@ -8,6 +8,7 @@ from tkinter import ttk, messagebox
 from app.utils.api_client import APIClient
 from app.libros import LibrosPanel
 from app.prestamos import PrestamosPanel
+from app.qr_panel import QRPanel
 
 
 class MainApp:
@@ -27,18 +28,19 @@ class MainApp:
     def __init__(self):
         self.api = APIClient()
         self._panel_activo = None
+        self._panel_widget  = None
         self._build()
 
     def _build(self):
         self.root = tk.Tk()
         self.root.title("Sistema de Gestión de Biblioteca")
-        self.root.geometry("1060x640")
-        self.root.minsize(860, 520)
+        self.root.geometry("1100x660")
+        self.root.minsize(900, 540)
         self.root.configure(bg=self.BG)
         self.root.eval("tk::PlaceWindow . center")
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-        # ── Layout principal ──
-        self.sidebar = tk.Frame(self.root, bg=self.SIDEBAR, width=200)
+        self.sidebar = tk.Frame(self.root, bg=self.SIDEBAR, width=210)
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
 
@@ -57,19 +59,19 @@ class MainApp:
         tk.Label(self.sidebar, text="Sistema de Gestión",
                  font=("Segoe UI", 8), bg=self.SIDEBAR, fg=self.TEXT_DIM).pack(pady=(0, 24))
 
-        # Separador
-        tk.Frame(self.sidebar, bg=self.PANEL_BG, height=1).pack(fill="x", padx=16, pady=(0, 16))
+        tk.Frame(self.sidebar, bg=self.PANEL_BG, height=1).pack(fill="x", padx=16, pady=(0, 14))
 
-        # Navegación
-        self._nav_btns = {}
+        # Items de navegación
         nav_items = [
-            ("libros",    "📚  Catálogo",    True),
-            ("prestamos", "📋  Préstamos",   True),
+            ("libros",    "📚  Catálogo"),
+            ("prestamos", "📋  Préstamos"),
+            ("qr",        "📱  Códigos QR"),
         ]
         if self.api.is_bibliotecario():
-            nav_items.append(("usuarios", "👥  Usuarios", True))
+            nav_items.append(("usuarios", "👥  Usuarios"))
 
-        for key, label, _ in nav_items:
+        self._nav_btns = {}
+        for key, label in nav_items:
             btn = tk.Button(
                 self.sidebar, text=label,
                 font=self.FONT_SIDE, anchor="w", cursor="hand2",
@@ -83,21 +85,19 @@ class MainApp:
 
         # Espaciador
         tk.Frame(self.sidebar, bg=self.SIDEBAR).pack(fill="both", expand=True)
-
-        # Info de usuario
         tk.Frame(self.sidebar, bg=self.PANEL_BG, height=1).pack(fill="x", padx=16, pady=(0, 10))
 
+        # Info usuario
         usuario = self.api.usuario or {}
         tk.Label(self.sidebar, text=usuario.get("nombre", ""),
                  font=self.FONT_BOLD, bg=self.SIDEBAR, fg=self.TEXT,
-                 wraplength=170).pack(padx=16, anchor="w")
+                 wraplength=178).pack(padx=16, anchor="w")
         tk.Label(self.sidebar, text=usuario.get("tipo", ""),
                  font=("Segoe UI", 8), bg=self.SIDEBAR, fg=self.ACCENT).pack(padx=16, anchor="w")
         tk.Label(self.sidebar, text=usuario.get("email", ""),
                  font=("Segoe UI", 8), bg=self.SIDEBAR, fg=self.TEXT_DIM,
-                 wraplength=170).pack(padx=16, anchor="w", pady=(2, 0))
+                 wraplength=178).pack(padx=16, anchor="w", pady=(2, 0))
 
-        # Cerrar sesión
         tk.Button(self.sidebar, text="⏻  Cerrar sesión",
                   font=("Segoe UI", 9), cursor="hand2",
                   bg=self.SIDEBAR, fg=self.TEXT_DIM,
@@ -109,45 +109,58 @@ class MainApp:
         if self._panel_activo == key:
             return
 
-        # Resaltar botón activo en sidebar
+        # Resaltar botón activo
         for k, btn in self._nav_btns.items():
-            btn.config(bg=self.SEL_BG if k == key else self.SIDEBAR,
-                       fg=self.ACCENT if k == key else self.TEXT,
-                       font=(self.FONT_SIDE[0], self.FONT_SIDE[1], "bold") if k == key else self.FONT_SIDE)
+            activo = k == key
+            btn.config(
+                bg=self.SEL_BG if activo else self.SIDEBAR,
+                fg=self.ACCENT if activo else self.TEXT,
+                font=(self.FONT_SIDE[0], self.FONT_SIDE[1], "bold") if activo else self.FONT_SIDE
+            )
 
-        # Limpiar contenido
+        # Destruir panel anterior (detiene cámara si está activa)
+        if self._panel_widget:
+            self._panel_widget.destroy()
+            self._panel_widget = None
+
         for widget in self.content.winfo_children():
             widget.destroy()
 
-        # Cargar panel
+        # Crear nuevo panel
         if key == "libros":
             panel = LibrosPanel(self.content)
         elif key == "prestamos":
             panel = PrestamosPanel(self.content)
+        elif key == "qr":
+            panel = QRPanel(self.content)
         elif key == "usuarios":
             panel = UsuariosPanel(self.content)
         else:
             return
 
         panel.pack(fill="both", expand=True)
-        self._panel_activo = key
+        self._panel_widget  = panel
+        self._panel_activo  = key
 
     def _cerrar_sesion(self):
         if messagebox.askyesno("Cerrar sesión", "¿Seguro que quieres cerrar sesión?", parent=self.root):
+            if self._panel_widget:
+                self._panel_widget.destroy()
             self.api.clear_session()
             self.root.destroy()
-            # Reiniciar app desde main.py
             from app.login import LoginWindow
-            def on_login():
-                app = MainApp()
-                app.run()
-            LoginWindow(on_login).run()
+            LoginWindow(lambda: MainApp().run()).run()
+
+    def _on_close(self):
+        if self._panel_widget:
+            self._panel_widget.destroy()
+        self.root.destroy()
 
     def run(self):
         self.root.mainloop()
 
 
-# ── Panel de usuarios (solo bibliotecario) ──────────────────────
+# ── Panel de Usuarios ──────────────────────────────────────────
 
 class UsuariosPanel(tk.Frame):
 
@@ -175,14 +188,12 @@ class UsuariosPanel(tk.Frame):
     def _build(self):
         header = tk.Frame(self, bg=self.BG)
         header.pack(fill="x", padx=20, pady=(18, 10))
-
         tk.Label(header, text="👥  Usuarios",
                  font=self.FONT_H1, bg=self.BG, fg=self.TEXT).pack(side="left")
-
         tk.Button(header, text="＋  Nuevo usuario",
                   font=self.FONT_BOLD, cursor="hand2",
                   bg=self.ACCENT, fg="white",
-                  activebackground=self.ACCENT_H, activeforeground="white",
+                  activebackground=self.ACCENT_H,
                   relief="flat", bd=0, padx=14, pady=6,
                   command=self._dialogo_crear).pack(side="right")
 
@@ -202,16 +213,15 @@ class UsuariosPanel(tk.Frame):
 
         self.tree = ttk.Treeview(tree_frame, columns=cols, show="headings",
                                  style="Usr.Treeview", selectmode="browse")
-
-        widths = {"ID": 40, "Nombre": 180, "Email": 200, "Tipo": 110, "Activo": 70, "Registro": 110}
+        widths = {"ID": 40, "Nombre": 180, "Email": 210, "Tipo": 110, "Activo": 70, "Registro": 110}
         for c in cols:
             self.tree.heading(c, text=c)
             self.tree.column(c, width=widths[c], anchor="w" if c in ("Nombre", "Email") else "center")
 
-        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
+        sb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=sb.set)
         self.tree.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        sb.pack(side="right", fill="y")
 
         self.tree.tag_configure("bibliotecario", foreground=self.ACCENT)
         self.tree.tag_configure("par",   background=self.ROW_A)
@@ -222,44 +232,25 @@ class UsuariosPanel(tk.Frame):
                  bg=self.BG, fg=self.TEXT_DIM, anchor="w").pack(fill="x", padx=20, pady=(0, 8))
 
     def cargar_usuarios(self):
-        resultado = self.api.get_usuarios()
+        r = self.api.get_usuarios()
         for row in self.tree.get_children():
             self.tree.delete(row)
-
-        # Manejo detallado de errores para diagnóstico
-        if not resultado.get("success"):
-            error_msg = resultado.get("error", "sin detalle")
-            self.status_var.set(f"❌ Error: {error_msg}")
+        if not r.get("success"):
+            self.status_var.set(f"Error: {r.get('error')}")
             return
-
-        data = resultado.get("data", {})
-        if not data:
-            self.status_var.set(f"❌ 'data' vacío en respuesta. Respuesta completa: {resultado}")
-            return
-
-        usuarios = data.get("usuarios", [])
-        if not usuarios:
-            self.status_var.set(f"⚠️ Lista vacía. Total: {data.get('total', '?')}")
-            return
-
+        usuarios = r["data"]["usuarios"]
         for i, u in enumerate(usuarios):
             tag = "bibliotecario" if u["tipo"] == "Bibliotecario" else ("par" if i % 2 == 0 else "impar")
             self.tree.insert("", "end", iid=str(u["id"]), tags=(tag,),
-                             values=(
-                                 u["id"],
-                                 u["nombre"],
-                                 u["email"],
-                                 u["tipo"],
-                                 "✓" if u["activo"] else "✗",
-                                 u.get("created_at", "")[:10],
-                             ))
-
-        self.status_var.set(f"{data['total']} usuarios registrados")
+                             values=(u["id"], u["nombre"], u["email"],
+                                     u["tipo"], "✓" if u["activo"] else "✗",
+                                     u.get("created_at", "")[:10]))
+        self.status_var.set(f"{r['data']['total']} usuarios registrados")
 
     def _dialogo_crear(self):
         dlg = tk.Toplevel(self.winfo_toplevel())
         dlg.title("Nuevo Usuario")
-        dlg.geometry("400x380")
+        dlg.geometry("400x390")
         dlg.resizable(False, False)
         dlg.configure(bg=self.PANEL_BG)
         dlg.grab_set()
@@ -267,19 +258,14 @@ class UsuariosPanel(tk.Frame):
         tk.Label(dlg, text="Nuevo Usuario", font=self.FONT_H1,
                  bg=self.PANEL_BG, fg=self.TEXT).pack(pady=(20, 14))
 
-        campos = [
-            ("nombre",   "Nombre completo *", ""),
-            ("email",    "Email *",           ""),
-            ("password", "Contraseña *",      ""),
-        ]
+        campos = [("nombre", "Nombre *", ""), ("email", "Email *", ""), ("password", "Contraseña *", "")]
         vars_ = {}
-        for key, label, valor in campos:
+        for key, label, val in campos:
             tk.Label(dlg, text=label, font=("Segoe UI", 9),
                      bg=self.PANEL_BG, fg=self.TEXT_DIM, anchor="w").pack(fill="x", padx=28)
-            v = tk.StringVar(value=valor)
-            show = "•" if key == "password" else ""
-            tk.Entry(dlg, textvariable=v, show=show, font=self.FONT_MAIN,
-                     bg=self.ENTRY_BG, fg=self.TEXT,
+            v = tk.StringVar(value=val)
+            tk.Entry(dlg, textvariable=v, show="•" if key == "password" else "",
+                     font=self.FONT_MAIN, bg=self.ENTRY_BG, fg=self.TEXT,
                      insertbackground=self.TEXT, relief="flat", bd=0
                      ).pack(fill="x", padx=28, ipady=6, pady=(2, 10))
             vars_[key] = v
@@ -287,10 +273,8 @@ class UsuariosPanel(tk.Frame):
         tk.Label(dlg, text="Tipo *", font=("Segoe UI", 9),
                  bg=self.PANEL_BG, fg=self.TEXT_DIM, anchor="w").pack(fill="x", padx=28)
         tipo_var = tk.StringVar(value="Lector")
-        ttk.Combobox(dlg, textvariable=tipo_var,
-                     values=["Lector", "Bibliotecario"],
-                     state="readonly", font=self.FONT_MAIN
-                     ).pack(fill="x", padx=28, pady=(2, 10))
+        ttk.Combobox(dlg, textvariable=tipo_var, values=["Lector", "Bibliotecario"],
+                     state="readonly", font=self.FONT_MAIN).pack(fill="x", padx=28, pady=(2, 10))
 
         msg_var = tk.StringVar()
         tk.Label(dlg, textvariable=msg_var, font=("Segoe UI", 9),
@@ -299,9 +283,9 @@ class UsuariosPanel(tk.Frame):
         def guardar():
             data = {k: v.get().strip() for k, v in vars_.items()}
             data["tipo"] = tipo_var.get()
-            for campo in ["nombre", "email", "password"]:
-                if not data[campo]:
-                    msg_var.set(f"El campo '{campo}' es obligatorio.")
+            for c in ["nombre", "email", "password"]:
+                if not data[c]:
+                    msg_var.set(f"El campo '{c}' es obligatorio.")
                     return
             r = self.api.crear_usuario(data)
             if r.get("success"):
@@ -310,9 +294,6 @@ class UsuariosPanel(tk.Frame):
             else:
                 msg_var.set(r.get("error", "Error al crear usuario."))
 
-        tk.Button(dlg, text="Crear Usuario",
-                  font=self.FONT_BOLD, cursor="hand2",
-                  bg=self.ACCENT, fg="white",
-                  activebackground=self.ACCENT_H,
-                  relief="flat", bd=0, padx=14, pady=8,
-                  command=guardar).pack(pady=(6, 16))
+        tk.Button(dlg, text="Crear Usuario", font=self.FONT_BOLD, cursor="hand2",
+                  bg=self.ACCENT, fg="white", activebackground=self.ACCENT_H,
+                  relief="flat", bd=0, padx=14, pady=8, command=guardar).pack(pady=(6, 16))
