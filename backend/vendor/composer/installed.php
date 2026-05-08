@@ -3,7 +3,7 @@
         'name' => 'proyecto_fct/sistema-biblioteca-backend',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '1f06b4b4e70adf85ade218406ed6070cc5ca0c7d',
+        'reference' => 'cb340fc0d12f67e304fb7c31d0638dacd22dab36',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -31,7 +31,7 @@
         'proyecto_fct/sistema-biblioteca-backend' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '1f06b4b4e70adf85ade218406ed6070cc5ca0c7d',
+            'reference' => 'cb340fc0d12f67e304fb7c31d0638dacd22dab36',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

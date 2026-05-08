@@ -30,8 +30,15 @@ require_once __DIR__ . '/api/controllers/PrestamosController.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Normalizar: quitar /api o /index.php del principio
-$uri = preg_replace('#^(/index\.php)?/api#', '', $uri);
+// Normalizar: extraer solo la parte después de /api (funciona en cualquier subcarpeta de XAMPP)
+$apiPos = strpos($uri, '/api');
+if ($apiPos !== false) {
+    $uri = substr($uri, $apiPos + 4); // +4 = strlen('/api')
+} else {
+    // Si no hay /api en la URL, calcular ruta relativa al directorio del script
+    $basePath = dirname($_SERVER['SCRIPT_NAME']);
+    $uri = substr($uri, strlen($basePath));
+}
 $uri = '/' . trim($uri, '/');
 
 // ── Enrutador ──────────────────────────────────────────────────

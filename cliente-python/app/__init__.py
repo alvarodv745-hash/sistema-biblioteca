@@ -1,1 +1,1 @@
-# App module
+# app/__init__.py

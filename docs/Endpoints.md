@@ -1,6 +1,6 @@
 # Documentación de Endpoints - API REST
 
-**Base URL**: `http://localhost/phpmyadmin/index.php?route=/database/structure&db=biblioteca`
+**Base URL**: `http://localhost:8000`
 
 ---
 

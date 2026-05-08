@@ -43,10 +43,10 @@ DB_NAME=biblioteca
 ### 4. Iniciar servidor local
 
 ```bash
-php -S localhost:8000
+php -S localhost:3306
 ```
 
-La API estará disponible en: **http://localhost:8000/api** 
+La API estará disponible en: **http://localhost:3306** 
 
 ---
 

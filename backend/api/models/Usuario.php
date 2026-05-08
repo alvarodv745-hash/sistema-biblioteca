@@ -45,7 +45,7 @@ class Usuario
             $where[] = 'tipo = ?';
             $params[] = $filtros['tipo'];
         }
-        if (isset($filtros['activo'])) {
+        if ($filtros['activo'] !== '') {
             $where[] = 'activo = ?';
             $params[] = (int) $filtros['activo'];
         }

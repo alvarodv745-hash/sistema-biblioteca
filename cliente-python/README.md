@@ -40,7 +40,7 @@ pip install -r requirements.txt
 Crea archivo `.env` en la carpeta `cliente-python/`:
 
 ```
-API_URL=http://localhost:8000/api
+API_URL=http://localhost:3306/api
 API_TIMEOUT=5
 ```
 
